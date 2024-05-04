@@ -1,11 +1,14 @@
-const token = require('jsonwebtoken');
+const tokenLib = require('jsonwebtoken')
+const bcrypt = require('bcrypt')
 
 const User = require('../models/user')
+
 const signupMsgOk = 'Utilisateur créé :)'
 const loginMsgKo = 'Utilisateur et/ou mot de passe incorrect :('
+const tokenKey = '8Vy0tRO5qBvZZVIGx576bNMsHrJUsaMQjLZiLlI2wWBx5Xzcya8aiSUksQ99Fv9q'
 
 exports.signup = (req, res) => {
-    bcrypt.hash(req.body.password, 5)
+    bcrypt.hash(req.body.password, 10)
       .then(hash => {
         const user = new User({
           email: req.body.email,
@@ -32,9 +35,9 @@ exports.signup = (req, res) => {
                     }
                     res.status(200).json({
                         userId: user._id,
-                        token: token.sign(
+                        token: tokenLib.sign(
                             { userId: user._id },
-                            '8Vy0tRO5qBvZZVIGx576bNMsHrJUsaMQjLZiLlI2wWBx5Xzcya8aiSUksQ99Fv9q',
+                            tokenKey,
                             { expiresIn: '12h' }
                         )
                     })

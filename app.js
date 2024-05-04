@@ -8,9 +8,7 @@ const password = encodeURIComponent('NzYJ5fBkkvj43T8h')
 const cluster = 'monvieuxgrimoire.xqsmp6c.mongodb.net'
 const clusterName = cluster.split('.')[0]
 
-mongoose.connect(`mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority`,
-  { useNewUrlParser: true,
-    useUnifiedTopology: true })
+mongoose.connect(`mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority`)
   .then(() => console.log(`Connexion au cluster ${clusterName} réussie :)`))
   .catch(() => console.log(`Connexion au cluster ${clusterName} échouée :(`))
 
