@@ -1,7 +1,6 @@
 const express = require('express')
 const mongoose = require('mongoose')
-
-const app = express()
+const path = require('path')
 
 const username = encodeURIComponent('lucmaggiotto')
 const password = encodeURIComponent('NzYJ5fBkkvj43T8h')
@@ -12,7 +11,11 @@ mongoose.connect(`mongodb+srv://${username}:${password}@${cluster}/?retryWrites=
   .then(() => console.log(`Connexion au cluster ${clusterName} réussie :)`))
   .catch(() => console.log(`Connexion au cluster ${clusterName} échouée :(`))
 
+const app = express()
+
+app.use('/images', express.static(path.join(__dirname, 'images')))
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
