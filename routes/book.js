@@ -8,8 +8,9 @@ const uploadImage = require('../middlewares/upload')
 const parseRequest = require('../middlewares/parseRequest')
 
 router.get('/', bookCtrl.getAllBooks)
-router.get('/:id', bookCtrl.getOneBook)
 router.get('/bestrating', bookCtrl.getBestRatedBooks)
+router.get('/:id', bookCtrl.getOneBook)
+
 router.post('/', auth, parseRequest, uploadImage, bookCtrl.createBook)
 router.put('/:id', auth, parseRequest, uploadImage, bookCtrl.updateBook)
 router.delete('/:id', auth, bookCtrl.deleteBook)

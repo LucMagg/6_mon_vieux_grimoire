@@ -1,12 +1,17 @@
 const bestRatedBooks = (books) => {
-    books.sort( (a, b) => { return a.averageRating - b.averageRating })
-    return books.slice(2)
+    books.sort( (a, b) => { return b.averageRating - a.averageRating })
+    let sliceToReturn = 0
+    books.length > 2 ?
+        sliceToReturn = 3 :
+        sliceToReturn = books.length
+    console.log(books.slice(0, sliceToReturn))
+    return books.slice(0, sliceToReturn)
 }
 
 const upperLower = (str) => {
     const chars = [' ', '-', '&'];
     let toReturn = str.substring(0,1).toUpperCase()
-    
+
     for (let i = 1; i <= str.length; i++) {
         let someMatch = false
         chars.forEach(char => {
