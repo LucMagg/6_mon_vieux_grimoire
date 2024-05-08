@@ -4,7 +4,6 @@ const bestRatedBooks = (books) => {
     books.length > 2 ?
         sliceToReturn = 3 :
         sliceToReturn = books.length
-    console.log(books.slice(0, sliceToReturn))
     return books.slice(0, sliceToReturn)
 }
 

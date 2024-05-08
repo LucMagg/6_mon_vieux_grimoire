@@ -2,13 +2,15 @@ const Book = require('../models/book')
 const fs = require('fs')
 
 const { bestRatedBooks, upperLower } = require('../utils/books')
-const { newBook } = require('./book/newBook')
 
-const noBooksToGet = 'Aucun livre enregistré pour l\'instant ;)'
-const bookUpdated = 'Livre mis à jour :)'
-const bookDeleted = 'Livre supprimé :)'
+const noBooksToGet = 'Aucun livre enregistré pour l\'instant'
+const bookCreated = 'Livre créé avec succès'
+const bookAlreadyInDatabase = 'Livre déjà enregistré dans la base de données'
+const yearError = 'L\'année de publication ne peut pas être supérieure à l\'année actuelle'
+const bookUpdated = 'Livre mis à jour'
+const bookDeleted = 'Livre supprimé'
 
-exports.getAllBooks = (req, res, next) => {
+const getAllBooks = (req, res, next) => {
     Book.find()
     .then(books => {
         books.length > 0 ? 
@@ -18,14 +20,15 @@ exports.getAllBooks = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-exports.getOneBook = (req, res, next) => {
+
+const getOneBook = (req, res, next) => {
     Book.findOne( {_id: req.params.id })
     .then(book => res.status(200).json(book))
     .catch(error => res.status(404).json({ error }))
 }
 
-exports.getBestRatedBooks = (req, res, next) => {
-    console.log('here')
+
+const getBestRatedBooks = (req, res, next) => {
     Book.find()
     .then(books => {
         books.length > 0 ? 
@@ -35,11 +38,40 @@ exports.getBestRatedBooks = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-exports.createBook = (req, res, next) => {
-    newBook(req, res)
+
+const createBook = (req, res, next) => {
+    const bookBody = JSON.parse(req.body.book)
+    const book = new Book({
+        userId: req.auth.userId,
+        title: upperLower(bookBody.title),
+        author: upperLower(bookBody.author),
+        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`,
+        year: bookBody.year,
+        genre: upperLower(bookBody.genre),
+        ratings: [{
+            userId: req.auth.userId, 
+            grade: bookBody.ratings[0].grade
+        }],
+        averageRating: bookBody.averageRating
+    })
+
+    book.year <= new Date().getFullYear() ?
+        Book.find()
+        .then(books => {
+            let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author))
+            if (isInDatabase) {
+                res.status(401).json({ message: bookAlreadyInDatabase})
+            } else {
+                book.save()
+                    .then(() => res.status(201).json({ message: bookCreated }))
+                    .catch(error => res.status(400).json({ error }))
+            }
+        }):
+        res.status(401).json({ message: yearError})
 }
 
-exports.updateBook = (req, res, next) => {
+
+const updateBook = (req, res, next) => {
     let bookBody = {}
     Book.findOne( {_id: req.params.id } )
         .then(book => {
@@ -66,7 +98,7 @@ exports.updateBook = (req, res, next) => {
         .catch(error => res.status(400).json({ error }))
 }
 
-exports.deleteBook = (req, res, next) => {
+const deleteBook = (req, res, next) => {
     Book.findOne( {_id: req.params.id } )
     .then(book => {
             fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})  
@@ -77,6 +109,25 @@ exports.deleteBook = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-exports.rateBook = (req, res, next) => {
+const rateBook = (req, res, next) => {
+    Book.findOne( {_id: req.params.id } )
+    .then(book => {
+            book.ratings.push({
+                userId: req.body.userId,
+                grade: req.body.rating
+            })
+            book.averageRating = (book.ratings.reduce((acc, value) => {
+                return acc + value.grade
+            },0) / book.ratings.length).toFixed(1)
 
+            Book.updateOne({ _id: req.params.id }, { 
+                ratings: book.ratings,
+                averageRating: book.averageRating
+            })
+                .then(() => res.status(200).json(book))
+                .catch(error => res.status(400).json({ error }))
+    })
+    .catch(error => res.status(400).json({ error }))
 }
+
+module.exports = { getAllBooks, getOneBook, getBestRatedBooks, createBook, updateBook, deleteBook, rateBook }
