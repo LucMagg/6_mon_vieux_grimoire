@@ -11,7 +11,7 @@ router.get('/', bookCtrl.getAllBooks)
 router.get('/:id', bookCtrl.getOneBook)
 router.get('/bestrating', bookCtrl.getBestRatedBooks)
 router.post('/', auth, parseRequest, uploadImage, bookCtrl.createBook)
-router.put('/:id', auth, bookCtrl.updateBook)
+router.put('/:id', auth, parseRequest, uploadImage, bookCtrl.updateBook)
 router.delete('/:id', auth, bookCtrl.deleteBook)
 router.post('/:id/rating', auth, bookCtrl.rateBook)
 
