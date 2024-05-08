@@ -6,6 +6,7 @@ const { newBook } = require('./book/newBook')
 
 const noBooksToGet = 'Aucun livre enregistré pour l\'instant ;)'
 const bookUpdated = 'Livre mis à jour :)'
+const bookDeleted = 'Livre supprimé :)'
 
 exports.getAllBooks = (req, res, next) => {
     Book.find()
@@ -66,7 +67,14 @@ exports.updateBook = (req, res, next) => {
 }
 
 exports.deleteBook = (req, res, next) => {
-
+    Book.findOne( {_id: req.params.id } )
+    .then(book => {
+            fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})  
+            Book.deleteOne({ _id: req.params.id }) 
+                .then(() => res.status(200).json({ message: bookDeleted }))
+                .catch(error => res.status(400).json({ error }))
+    })
+    .catch(error => res.status(400).json({ error }))
 }
 
 exports.rateBook = (req, res, next) => {
