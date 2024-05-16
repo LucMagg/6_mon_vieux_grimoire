@@ -1,16 +1,15 @@
-const Book = require('../models/book')
-const fs = require('fs')
+const Book = require('../../models/book')
 
 
 const createBook = (req, res, next) => {
     const bookBody = JSON.parse(req.body.book)
     const book = new Book({
         userId: req.auth.userId,
-        title: upperLower(bookBody.title),
-        author: upperLower(bookBody.author),
+        title: bookBody.title,
+        author: bookBody.author,
         imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`,
         year: bookBody.year,
-        genre: upperLower(bookBody.genre),
+        genre: bookBody.genre,
         ratings: [{
             userId: req.auth.userId, 
             grade: bookBody.ratings[0].grade
@@ -31,45 +30,6 @@ const createBook = (req, res, next) => {
             }
         }):
         res.status(400).json({ message: 'L\'année de publication ne peut pas être supérieure à l\'année actuelle'})
-}
-
-
-const updateBook = (req, res, next) => {
-    let bookBody = {}
-    Book.findOne( {_id: req.params.id } )
-        .then(book => {
-            if (req.file === undefined) {
-                bookBody = req.body
-            } else { 
-                bookBody = JSON.parse(req.body.book)
-                console.log(book.imageUrl)
-                fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})
-                book.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
-                console.log(book.imageUrl)
-            }
-            
-            Book.updateOne( { _id: req.params.id }, { 
-                title: upperLower(bookBody.title),
-                author: upperLower(bookBody.author),
-                imageUrl: book.imageUrl,
-                year: bookBody.year,
-                genre: upperLower(bookBody.genre)
-             })
-                .then(() => res.status(200).json({ message: 'Livre mis à jour' }))
-                .catch(error => res.status(400).json({ error }))
-        })
-        .catch(error => res.status(400).json({ error }))
-}
-
-const deleteBook = (req, res, next) => {
-    Book.findOne( {_id: req.params.id } )
-    .then(book => {
-            fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})  
-            Book.deleteOne({ _id: req.params.id }) 
-                .then(() => res.status(200).json({ message: 'Livre supprimé' }))
-                .catch(error => res.status(400).json({ error }))
-    })
-    .catch(error => res.status(400).json({ error }))
 }
 
 const rateBook = (req, res, next) => {
@@ -93,4 +53,4 @@ const rateBook = (req, res, next) => {
     .catch(error => res.status(400).json({ error }))
 }
 
-module.exports = { createBook, updateBook, deleteBook, rateBook }
+module.exports = { createBook, rateBook }
