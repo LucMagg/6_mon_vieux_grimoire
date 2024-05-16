@@ -130,6 +130,8 @@ const checkRateReq = (req, book) => {
     if (req.body.rating < 0 || req.body.rating > 5) {
         return [false, 400, {'error': 'La note du livre doit être comprise entre 0 et 5'}]
     }
+
+    return [true]
 }
 
 module.exports = { createBook, rateBook }
