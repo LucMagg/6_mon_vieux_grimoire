@@ -55,7 +55,7 @@ const createBook = (req, res, next) => {
         averageRating: bookBody.averageRating
     })
 
-    book.year <= new Date().getFullYear() ?
+    book.year <= new Date().getFullYear() + 1 ?
         Book.find()
         .then(books => {
             let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author))
@@ -67,7 +67,7 @@ const createBook = (req, res, next) => {
                     .catch(error => res.status(400).json({ error }))
             }
         }):
-        res.status(401).json({ message: yearError})
+        res.status(400).json({ message: yearError})
 }
 
 

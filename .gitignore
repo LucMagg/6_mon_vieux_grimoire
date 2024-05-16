@@ -131,3 +131,6 @@ dist
 
 #images
 /images
+
+#env
+.env

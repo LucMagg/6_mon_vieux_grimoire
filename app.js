@@ -1,10 +1,11 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const path = require('path')
+const env = require('dotenv').config()
 
-const username = encodeURIComponent('lucmaggiotto')
-const password = encodeURIComponent('NzYJ5fBkkvj43T8h')
-const cluster = 'monvieuxgrimoire.xqsmp6c.mongodb.net'
+const username = encodeURIComponent(process.env.MONGODB_USER)
+const password = encodeURIComponent(process.env.MONGODB_PWD)
+const cluster = process.env.MONGODB_CLUSTER
 const clusterName = cluster.split('.')[0]
 
 mongoose.connect(`mongodb+srv://${username}:${password}@${cluster}/?retryWrites=true&w=majority`)

@@ -1,6 +1,7 @@
 const tokenLib = require('jsonwebtoken')
+const env = require('dotenv').config()
 
-const tokenKey = '8Vy0tRO5qBvZZVIGx576bNMsHrJUsaMQjLZiLlI2wWBx5Xzcya8aiSUksQ99Fv9q'
+const tokenKey = process.env.TOKEN_KEY
  
 module.exports = (req, res, next) => {
    try {
@@ -9,9 +10,9 @@ module.exports = (req, res, next) => {
        const userId = decodedToken.userId
        req.auth = {
            userId: userId
-       };
-	next();
+       }
+	next()
    } catch(error) {
-       res.status(401).json({ error });
+       res.status(401).json({ error })
    }
 }
