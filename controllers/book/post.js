@@ -115,7 +115,7 @@ const checkRateReq = (req, book) => {
     }
 
     for (value of Object.values(req.body)) {
-        if (typeof(value) === String) {
+        if (typeof(value) === "string") {
             if (value.substring(0,1) === '<') {
                 return [false, 400, {'error': 'tentative d\'injection de script détectée'}]
             }

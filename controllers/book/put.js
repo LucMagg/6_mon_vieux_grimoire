@@ -36,6 +36,7 @@ const updateBook = (req, res, next) => {
     } else {
         res.status(isValidRequest[1]).json(isValidRequest[2])
     }
+    next()
 }
 
 const checkUpdateReq = (req) => {
@@ -44,7 +45,7 @@ const checkUpdateReq = (req) => {
     if (req.file === undefined) {
         bookBody = req.body
     } else {
-        bookBody = bookBody = JSON.parse(req.body.book)
+        bookBody = JSON.parse(req.body.book)
     }
 
     const keysToCheck = ['userId','title','author','year','genre']
@@ -55,7 +56,9 @@ const checkUpdateReq = (req) => {
     }
 
     for (value of Object.values(bookBody)) {
-        if (typeof(value) === String) {
+        console.log('here ' + value)
+        if (typeof(value) === "string") {
+            console.log(value + ' ' + value.substring(0,1))
             if (value.substring(0,1) === '<') {
                 return [false, 400, {'error': 'tentative d\'injection de script détectée'}]
             }
