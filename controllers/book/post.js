@@ -64,7 +64,6 @@ const rateBook = (req, res, next) => {
             }
         })
         .catch(error => res.status(400).json({ error }))
-    next()
 }
 
 
@@ -107,7 +106,7 @@ const checkCreateReq = (req) => {
 
 
 const checkRateReq = (req, book) => {
-    const keysToCheck = ['userId','grade']
+    const keysToCheck = ['userId','rating']
     for (key of keysToCheck) {
         if (!Object.hasOwn(req.body, key)) {
 		    return [false, 400, {'error': `${key} manquant`}]

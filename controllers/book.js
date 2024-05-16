@@ -42,10 +42,8 @@ const updateBook = (req, res, next) => {
                 bookBody = req.body
             } else { 
                 bookBody = JSON.parse(req.body.book)
-                console.log(book.imageUrl)
                 fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})
                 book.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
-                console.log(book.imageUrl)
             }
             
             Book.updateOne( { _id: req.params.id }, { 
