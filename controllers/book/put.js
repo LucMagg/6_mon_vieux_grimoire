@@ -9,6 +9,7 @@ const updateBook = (req, res, next) => {
             if (req.file === undefined) {
                 bookBody = req.body
             } else { 
+                req.file.fileName = `${Date.now()}.webp`
                 bookBody = JSON.parse(req.body.book)
                 console.log(book.imageUrl)
                 fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})

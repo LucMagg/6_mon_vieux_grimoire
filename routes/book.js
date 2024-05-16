@@ -14,9 +14,11 @@ router.get('/', getBookCtrl.getAllBooks)
 router.get('/bestrating', getBookCtrl.getBestRatedBooks)
 router.get('/:id', getBookCtrl.getOneBook)
 
-router.post('/', auth, parseRequest, uploadImage, postBookCtrl.createBook)
-router.put('/:id', auth, parseRequest, uploadImage, putBookCtrl.updateBook)
-router.delete('/:id', auth, delBookCtrl.deleteBook)
+router.post('/', auth, parseRequest, postBookCtrl.createBook, uploadImage)
 router.post('/:id/rating', auth, postBookCtrl.rateBook)
+
+router.put('/:id', auth, parseRequest, putBookCtrl.updateBook, uploadImage)
+
+router.delete('/:id', auth, delBookCtrl.deleteBook)
 
 module.exports = router
