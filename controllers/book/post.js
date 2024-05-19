@@ -1,11 +1,13 @@
 const Book = require('../../models/book')
 
+const { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile } = require('../utils/checks')
+
 
 const createBook = (req, res, next) => {
     const isValidRequest = checkCreateReq(req)
 
     if (isValidRequest[0]) {
-        const bookBody = JSON.parse(req.body.book)
+        const bookBody = isValidRequest[1]
 
         req.file.fileName = `${Date.now()}.webp`
         const book = new Book({
@@ -28,7 +30,10 @@ const createBook = (req, res, next) => {
                     res.status(400).json({ message: 'Livre déjà enregistré dans la base de données'})
                 } else {
                     book.save()
-                        .then(() => res.status(201).json({ message: 'Livre créé avec succès' }))
+                        .then(() => {
+                            res.status(201).json({ message: 'Livre créé avec succès' })
+                            next()
+                        })
                         .catch(error => res.status(400).json({ error }))
                 }
             })
@@ -36,18 +41,20 @@ const createBook = (req, res, next) => {
     } else {
         res.status(isValidRequest[1]).json(isValidRequest[2])
     }
-    next()
 }
 
 const rateBook = (req, res, next) => {
+    console.log('here')
     Book.findOne( {_id: req.params.id } )
         .then(book => {
+            console.log('there')
             const isValidRequest = checkRateReq(req, book)
 
             if (isValidRequest[0]) {
+                const rateBody = isValidRequest[1]
                 book.ratings.push({
                     userId: req.auth.userId,
-                    grade: req.body.rating
+                    grade: rateBody.rating
                 })
                 book.averageRating = (book.ratings.reduce((acc, value) => {
                     return acc + value.grade
@@ -68,69 +75,63 @@ const rateBook = (req, res, next) => {
 
 
 const checkCreateReq = (req) => {
-    const bookBody = JSON.parse(req.body.book)
-
+    const isImageValid = checkImageFile(req)
+    if (!isImageValid[0]) {
+        return isImageValid
+    }
+    
+    let bookBody = JSON.parse(req.body.book)
     const keysToCheck = ['userId','title','author','year','genre']
-    for (key of keysToCheck) {
-        if (!Object.hasOwn(bookBody, key)) {
-		    return [false, 400, {'error': `${key} manquant`}]
-	    }
+
+    const hasValidKeys = checkKeys(bookBody, keysToCheck)
+    if (!hasValidKeys[0]) {
+        return hasValidKeys
     }
 
-    for (value of Object.values(bookBody)) {
-        if (typeof(value) === String) {
-            if (value.substring(0,1) === '<') {
-                return [false, 400, {'error': 'tentative d\'injection de script détectée'}]
-            }
-        }
+    bookBody = checkValues(bookBody, keysToCheck)
+
+    const hasValidYear = checkYear(bookBody.year)
+    if (!hasValidYear[0]) {
+        return hasValidYear
     }
 
-    if (!req.hasOwnProperty('file')) {
-		return [false, 400, {'error': 'image manquante'}]
-	}
-    if (!bookBody.ratings[0].hasOwnProperty('grade')) {
-		return [false, 400, {'error': 'note manquante'}]
-	}
-    if (bookBody.year > new Date().getFullYear() + 1) {
-       return [false, 400, {'error': 'L\'année de publication ne peut pas être supérieure à l\'année actuelle + 1'}]
-    }
-    if (bookBody.year < 1450) {
-        return [false, 400, {'error': 'L\'année de publication ne peut pas être inférieure à l\'avènement de l\'imprimerie'}]
-    }
-    if (bookBody.ratings[0].grade < 0 || bookBody.ratings[0].grade > 5) {
-        return [false, 400, {'error': 'La note du livre doit être comprise entre 0 et 5'}]
+    const hasGrade = checkKeys(bookBody.ratings[0],['grade'])
+    if (!hasGrade[0]) {
+        return hasGrade
     }
 
-	return [true]
+    const hasValidGrade = checkRating(bookBody.ratings[0].grade)
+    if (!hasValidGrade[0]) {
+        return hasValidGrade
+    }
+
+	return [true, bookBody]
 }
 
 
 const checkRateReq = (req, book) => {
+    console.log('pouet')
+    let rateBody = req.body
+
     const keysToCheck = ['userId','rating']
-    for (key of keysToCheck) {
-        if (!Object.hasOwn(req.body, key)) {
-		    return [false, 400, {'error': `${key} manquant`}]
-	    }
+    const hasValidKeys = checkKeys(rateBody, keysToCheck)
+    if (!hasValidKeys[0]) {
+        return hasValidKeys
     }
 
-    for (value of Object.values(req.body)) {
-        if (typeof(value) === "string") {
-            if (value.substring(0,1) === '<') {
-                return [false, 400, {'error': 'tentative d\'injection de script détectée'}]
-            }
-        }
+    rateBody = checkValues(rateBody, keysToCheck)
+
+    const hasAlreadyRated = checkAlreadyRatedBook(book, req.auth.userId)
+    if (!hasAlreadyRated[0]) {
+        return hasAlreadyRated
     }
 
-    const alreadyRatedUsers = book.ratings.map(rating => rating.userId)
-    if (alreadyRatedUsers.includes(req.auth.userId)) {
-        return [false, 400, {'error': 'Cet utilisateur a déjà noté le livre'}]
-    }        
-
-    if (req.body.rating < 0 || req.body.rating > 5) {
-        return [false, 400, {'error': 'La note du livre doit être comprise entre 0 et 5'}]
+    const hasValidGrade = checkRating(rateBody.rating)
+    if (!hasValidGrade[0]) {
+        return hasValidGrade
     }
 
-    return [true]
+    return [true, rateBody]
 }
 
 module.exports = { createBook, rateBook }
