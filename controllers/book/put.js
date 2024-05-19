@@ -1,23 +1,28 @@
 const Book = require('../../models/book')
 const fs = require('fs')
 
+const { checkKeys, checkValues, checkYear, checkImageFile, checkUser } = require('../utils/checks')
 
 const updateBook = (req, res, next) => {
     const isValidRequest = checkUpdateReq(req)
 
     if (isValidRequest[0]) {
-        let bookBody = {}
+        let bookBody = isValidRequest[1]
+        
         Book.findOne( {_id: req.params.id } )
             .then(book => {
-                if (req.auth.userId === book.userId) {
-                    if (req.file === undefined) {
-                        bookBody = req.body
-                    } else { 
+                const isAuthorizedUser = checkUser(req, book.userId)
+
+                if (!isAuthorizedUser[0]) {
+                    res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
+                } else {
+                    console.log('here')
+                    if (req.file !== undefined) {
                         req.file.fileName = `${Date.now()}.webp`
-                        bookBody = JSON.parse(req.body.book)
                         fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})
                         book.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
                     }
+
                     
                     Book.updateOne( { _id: req.params.id }, { 
                         title: bookBody.title,
@@ -28,8 +33,6 @@ const updateBook = (req, res, next) => {
                     })
                         .then(() => res.status(200).json({ message: 'Livre mis à jour' }))
                         .catch(error => res.status(400).json({ error }))
-                } else {
-                    res.status(401).json({ 'error': 'Un utilisateur n\'est pas autorisé à modifier le livre créé par un autre utilisateur'})
                 }
             })
             .catch(error => res.status(400).json({ error }))
@@ -41,36 +44,30 @@ const updateBook = (req, res, next) => {
 
 const checkUpdateReq = (req) => {
     let bookBody = {}
-
     if (req.file === undefined) {
         bookBody = req.body
     } else {
+        const isImageValid = checkImageFile(req)
+        if (!isImageValid[0]) {
+            return isImageValid
+        }
         bookBody = JSON.parse(req.body.book)
     }
 
     const keysToCheck = ['userId','title','author','year','genre']
-    for (key of keysToCheck) {
-        if (!Object.hasOwn(bookBody, key)) {
-		    return [false, 400, {'error': `${key} manquant`}]
-	    }
+    const hasValidKeys = checkKeys(bookBody, keysToCheck)
+    if (!hasValidKeys[0]) {
+        return hasValidKeys
     }
 
-    for (value of Object.values(bookBody)) {
-        if (typeof(value) === "string") {
-            if (value.substring(0,1) === '<') {
-                return [false, 400, {'error': 'tentative d\'injection de script détectée'}]
-            }
-        }
+    bookBody = checkValues(bookBody, keysToCheck)
+
+    const hasValidYear = checkYear(bookBody.year)
+    if (!hasValidYear[0]) {
+        return hasValidYear
     }
 
-    if (bookBody.year > new Date().getFullYear() + 1) {
-       return [false, 400, {'error': 'L\'année de publication ne peut pas être supérieure à l\'année actuelle + 1'}]
-    }
-    if (bookBody.year < 1450) {
-        return [false, 400, {'error': 'L\'année de publication ne peut pas être inférieure à l\'avènement de l\'imprimerie'}]
-    }
-
-	return [true]
+	return [true, bookBody]
 }
 
 module.exports = { updateBook }
