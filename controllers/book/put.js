@@ -31,7 +31,10 @@ const updateBook = (req, res, next) => {
                         year: bookBody.year,
                         genre: bookBody.genre
                     })
-                        .then(() => res.status(200).json({ message: 'Livre mis à jour' }))
+                        .then(() => {
+                            res.status(200).json({ message: 'Livre mis à jour' })
+                            next()
+                    })
                         .catch(error => res.status(400).json({ error }))
                 }
             })
@@ -39,7 +42,7 @@ const updateBook = (req, res, next) => {
     } else {
         res.status(isValidRequest[1]).json(isValidRequest[2])
     }
-    next()
+    
 }
 
 const checkUpdateReq = (req) => {
