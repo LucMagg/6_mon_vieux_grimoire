@@ -2,7 +2,11 @@ const checkKeys = (reqObject, keysToCheck) => {
     for (key of keysToCheck) {
         if (!Object.hasOwn(reqObject, key)) {
 		    return [false, 400, {'error': `${key} manquant`}]
-	    }
+	    } else {
+            if (reqObject[key] === ''){
+                return [false, 400, {'error': `${key} vide`}]
+            } 
+        }
     }
     return [true]
 }
@@ -79,4 +83,13 @@ const checkUser = (req, userId) => {
 }
 
 
-module.exports = { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkUser }
+const checkEmail = (req) => {
+    emailRegEx = new RegExp(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)
+    if (!emailRegEx.test(req.body.email)) {
+        return [false, 400, {'error': 'email non valide'}]
+    }
+    return [true]
+}
+
+
+module.exports = { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkUser, checkEmail }
