@@ -16,7 +16,6 @@ const updateBook = (req, res, next) => {
                 if (!isAuthorizedUser[0]) {
                     res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
                 } else {
-                    console.log('here')
                     if (req.file !== undefined) {
                         req.file.fileName = `${Date.now()}.webp`
                         fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})

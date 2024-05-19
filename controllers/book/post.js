@@ -44,10 +44,8 @@ const createBook = (req, res, next) => {
 }
 
 const rateBook = (req, res, next) => {
-    console.log('here')
     Book.findOne( {_id: req.params.id } )
         .then(book => {
-            console.log('there')
             const isValidRequest = checkRateReq(req, book)
 
             if (isValidRequest[0]) {
@@ -110,7 +108,6 @@ const checkCreateReq = (req) => {
 
 
 const checkRateReq = (req, book) => {
-    console.log('pouet')
     let rateBody = req.body
 
     const keysToCheck = ['userId','rating']

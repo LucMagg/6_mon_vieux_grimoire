@@ -64,7 +64,6 @@ const checkAlreadyRatedBook = (book, userId) => {
 const checkImageFile = (req) => {
     if (req.file) {
         const mimeFileType = req.file.mimetype.split('/')
-        console.log(mimeFileType)
         if (mimeFileType[0] !== 'image') {
             return [false, 400, {'error': 'Le fichier uploadé n\'est pas une image'}]
         }
