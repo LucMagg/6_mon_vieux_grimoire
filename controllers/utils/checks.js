@@ -1,3 +1,5 @@
+const Book = require('../../models/book')
+
 const checkKeys = (reqObject, keysToCheck) => {
     for (key of keysToCheck) {
         if (!Object.hasOwn(reqObject, key)) {
@@ -91,4 +93,17 @@ const checkEmail = (req) => {
 }
 
 
-module.exports = { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkUser, checkEmail }
+const checkIfBookExists = (book) => {
+    Book.find()
+        .then(books => {
+            let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author))
+            if (isInDatabase) {
+                return [false, 400, {'error': 'Livre déjà enregistré dans la base de données'}]
+            }
+        })
+        .catch(error => res.status(400).json({ error }))
+    return [true]
+}
+
+
+module.exports = { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkUser, checkEmail, checkIfBookExists }

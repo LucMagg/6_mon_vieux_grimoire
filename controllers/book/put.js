@@ -1,7 +1,7 @@
 const Book = require('../../models/book')
 const fs = require('fs')
 
-const { checkKeys, checkValues, checkYear, checkImageFile, checkUser } = require('../utils/checks')
+const { checkKeys, checkValues, checkYear, checkImageFile, checkUser, checkIfBookExists } = require('../utils/checks')
 
 const updateBook = (req, res, next) => {
     const isValidRequest = checkUpdateReq(req)
@@ -12,29 +12,34 @@ const updateBook = (req, res, next) => {
         Book.findOne( {_id: req.params.id } )
             .then(book => {
                 const isAuthorizedUser = checkUser(req, book.userId)
-
-                if (!isAuthorizedUser[0]) {
-                    res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
-                } else {
+                if (isAuthorizedUser[0]) {
                     if (req.file !== undefined) {
                         req.file.fileName = `${Date.now()}.webp`
                         fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})
                         book.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
                     }
-
                     
-                    Book.updateOne( { _id: req.params.id }, { 
+                    const updatedBook = {
                         title: bookBody.title,
                         author: bookBody.author,
                         imageUrl: book.imageUrl,
                         year: bookBody.year,
                         genre: bookBody.genre
-                    })
-                        .then(() => {
-                            res.status(200).json({ message: 'Livre mis à jour' })
-                            next()
-                    })
-                        .catch(error => res.status(400).json({ error }))
+                    }
+                    
+                    const bookAlreadyExists = checkIfBookExists(updatedBook)
+                    if (bookAlreadyExists[0]) {
+                        Book.updateOne( { _id: req.params.id }, { updatedBook })
+                            .then(() => {
+                                res.status(200).json({ message: 'Livre mis à jour' })
+                                next()
+                            })
+                            .catch(error => res.status(400).json({ error }))
+                    } else {
+                        res.status(bookAlreadyExists[1]).json(bookAlreadyExists[2])
+                    }
+                } else {
+                    res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
                 }
             })
             .catch(error => res.status(400).json({ error }))

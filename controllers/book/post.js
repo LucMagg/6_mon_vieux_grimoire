@@ -1,6 +1,6 @@
 const Book = require('../../models/book')
 
-const { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile } = require('../utils/checks')
+const { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkIfBookExists } = require('../utils/checks')
 
 
 const createBook = (req, res, next) => {
@@ -23,21 +23,18 @@ const createBook = (req, res, next) => {
             }],
             averageRating: bookBody.ratings[0].grade
         })
-        Book.find()
-            .then(books => {
-                let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author))
-                if (isInDatabase) {
-                    res.status(400).json({ message: 'Livre déjà enregistré dans la base de données'})
-                } else {
-                    book.save()
-                        .then(() => {
-                            res.status(201).json({ message: 'Livre créé avec succès' })
-                            next()
-                        })
-                        .catch(error => res.status(400).json({ error }))
-                }
-            })
-            .catch(error => res.status(400).json({ error }))
+        
+        const bookAlreadyExists = checkIfBookExists(book)
+        if (bookAlreadyExists[0]) {
+            book.save()
+                .then(() => {
+                    res.status(201).json({ message: 'Livre créé avec succès' })
+                    next()
+                })
+                .catch(error => res.status(400).json({ error }))
+        } else {
+            res.status(bookAlreadyExists[1]).json(bookAlreadyExists[2])
+        }        
     } else {
         res.status(isValidRequest[1]).json(isValidRequest[2])
     }
