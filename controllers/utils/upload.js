@@ -1,5 +1,5 @@
 const sharp = require('sharp')
-const fs = require('fs')
+const fs = require('fs').promises
 
 const processImage = async (pic) => {
     const toReturn = await sharp(pic)
@@ -9,10 +9,11 @@ const processImage = async (pic) => {
     return toReturn
 }
 
-const uploadImage = async (req, res, next) => {
-    if (req.file != undefined && res.statusCode < 204) {
+const uploadImage = async (req) => {
+    if (req.file != undefined) {
         const processedImage = await processImage(req.file.buffer)
-        fs.writeFile('./images/' + req.file.fileName, processedImage, (error => {error && res.status(400).json({ error })}))
+        await fs.writeFile('./images/' + req.file.fileName, processedImage)
+            .catch(error => { error })
     }
 }
 

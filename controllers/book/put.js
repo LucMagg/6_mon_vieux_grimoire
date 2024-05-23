@@ -1,52 +1,68 @@
 const Book = require('../../models/book')
-const fs = require('fs')
+const fs = require('fs').promises
 
 const { checkKeys, checkValues, checkYear, checkImageFile, checkUser, checkIfBookExists } = require('../utils/checks')
+const uploadImage = require('../utils/upload')
 
-const updateBook = (req, res, next) => {
+const updateBook = async (req, res, next) => {
     const isValidRequest = checkUpdateReq(req)
 
     if (isValidRequest[0]) {
         let bookBody = isValidRequest[1]
         
-        Book.findOne( {_id: req.params.id } )
-            .then(book => {
-                const isAuthorizedUser = checkUser(req, book.userId)
-                if (isAuthorizedUser[0]) {
-                    if (req.file !== undefined) {
-                        req.file.fileName = `${Date.now()}.webp`
-                        fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`, () => {})
-                        book.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
-                    }
-                    
-                    const updatedBook = {
+        try {
+            const book = await Book.findOne( {_id: req.params.id } )
+            if (!book) {
+                return res.status(404).json({ message: `Aucun livre référencé avec l'id ${req.params.id}` });
+            }
+
+            const isAuthorizedUser = checkUser(req, book.userId)
+            if (isAuthorizedUser[0]) {
+                let updatedBook
+                if (req.file !== undefined) {
+                    req.file.fileName = `${Date.now()}.webp`
+                    await fs.unlink(`./images/${book.imageUrl.split('/images/')[1]}`)
+                    const imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.fileName}`
+                    updatedBook = {
                         title: bookBody.title,
                         author: bookBody.author,
-                        imageUrl: book.imageUrl,
+                        imageUrl: imageUrl,
                         year: bookBody.year,
                         genre: bookBody.genre
                     }
-                    
-                    const bookAlreadyExists = checkIfBookExists(updatedBook)
-                    if (bookAlreadyExists[0]) {
-                        Book.updateOne( { _id: req.params.id }, { updatedBook })
-                            .then(() => {
-                                res.status(200).json({ message: 'Livre mis à jour' })
-                                next()
-                            })
-                            .catch(error => res.status(400).json({ error }))
-                    } else {
-                        res.status(bookAlreadyExists[1]).json(bookAlreadyExists[2])
-                    }
                 } else {
-                    res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
+                    updatedBook = {
+                        title: bookBody.title,
+                        author: bookBody.author,
+                        year: bookBody.year,
+                        genre: bookBody.genre
+                    }
                 }
-            })
-            .catch(error => res.status(400).json({ error }))
+                console.log(updatedBook)
+                await updateMyBook(updatedBook, req, res, next)                
+                res.status(200).json({ message: 'Livre mis à jour' })
+            } else {
+                res.status(isAuthorizedUser[1]).json(isAuthorizedUser[2])
+            }
+        } catch(error) { res.status(400).json({ error }) }
     } else {
         res.status(isValidRequest[1]).json(isValidRequest[2])
     }
-    
+}
+
+
+const updateMyBook = async (updatedBook, req, res, next) => {
+    const bookAlreadyExists = checkIfBookExists(updatedBook, req.params.id)
+    if (bookAlreadyExists[0]) {
+        try {
+            await Book.updateOne( { _id: req.params.id }, updatedBook )
+            await uploadImage(req, res, next)
+        } catch(error) {
+            res.status(400).json({ error })
+        } 
+    } else {
+        res.status(bookAlreadyExists[1]).json(bookAlreadyExists[2])
+    }
 }
 
 const checkUpdateReq = (req) => {

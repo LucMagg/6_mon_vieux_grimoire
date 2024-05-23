@@ -93,10 +93,10 @@ const checkEmail = (req) => {
 }
 
 
-const checkIfBookExists = (book) => {
+const checkIfBookExists = (book, id) => {
     Book.find()
         .then(books => {
-            let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author))
+            let isInDatabase = books.some(browseBook => (browseBook.title === book.title && browseBook.author === book.author && book._id === id))
             if (isInDatabase) {
                 return [false, 400, {'error': 'Livre déjà enregistré dans la base de données'}]
             }

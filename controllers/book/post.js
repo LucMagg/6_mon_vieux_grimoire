@@ -1,7 +1,7 @@
 const Book = require('../../models/book')
 
 const { checkKeys, checkValues, checkYear, checkRating, checkAlreadyRatedBook, checkImageFile, checkIfBookExists } = require('../utils/checks')
-
+const uploadImage = require('../utils/upload')
 
 const createBook = (req, res, next) => {
     const isValidRequest = checkCreateReq(req)
@@ -24,10 +24,11 @@ const createBook = (req, res, next) => {
             averageRating: bookBody.ratings[0].grade
         })
         
-        const bookAlreadyExists = checkIfBookExists(book)
+        const bookAlreadyExists = checkIfBookExists(book, 0)
         if (bookAlreadyExists[0]) {
             book.save()
                 .then(() => {
+                    uploadImage(req, res, next)
                     res.status(201).json({ message: 'Livre créé avec succès' })
                     next()
                 })
