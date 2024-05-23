@@ -12,22 +12,22 @@ const getAllBooks = async (req, res, next) => {
 
 
 const getOneBook = (req, res, next) => {
-    try {
-        const book = Book.findOne( {_id: req.params.id })
-        if (book) {
-            res.status(200).json(book)
-        } else {
-            res.status(404).json( {message : `Aucun livre référencé avec l'id ${req.params.id}`})
-        }
-    } catch (error) {
-        res.status(404).json({ error })
-    }
+    Book.findOne( {_id: req.params.id })
+        .then(book => {
+            if (book) {
+                res.status(200).json(book)
+            } else {
+                res.status(404).json( {message : `Aucun livre référencé avec l'id ${req.params.id}`})
+            }
+        })           
+        .catch (error => res.status(404).json({ error }))
 }
 
 
-const getBestRatedBooks = (req, res, next) => {
+
+const getBestRatedBooks = async (req, res, next) => {
     try {
-        const books = Book.find()
+        const books = await Book.find()
         res.status(200).json(bestRatedBooks(books))
     } catch(error) {
         res.status(400).json({ error })
